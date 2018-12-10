@@ -1,2 +1,2 @@
 # Cenazita
-Chat de Rc
+Fazer isto para usar
