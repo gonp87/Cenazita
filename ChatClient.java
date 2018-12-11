@@ -85,18 +85,47 @@ public class ChatClient {
     // Método principal do objecto
     public void run() throws IOException {
         // PREENCHER AQUI
-	while(true)
+	boolean go=true;
+	while(go)
 	    {
-	        //	if((sentence = inFromUser.readLine()) == null)
-		//	    break;
+		//if((sentence = inFromUser.readLine()) == null)
+		//    break;
 	        modifiedSentence = inFromServer.readLine();
-	        printMessage("From Server: " +modifiedSentence+"\n");
-	        if(modifiedSentence.compareTo("BYE") == 0)
-		    break;
+		String parts[] = modifiedSentence.split(" ",3);
+		try {
+		    switch (parts[0]) {
+		    case "OK":
+			printMessage("OK\n");
+			break;
+		    case "ERROR":
+			printMessage("ERROR\n");
+			break;
+		    case "MESSAGE":
+			printMessage(parts[1] + ": " + parts[2] + "\n");
+			break;
+		    case "NEWNICK":
+			printMessage(parts[1] + " mudou de nome para " + parts[2]+"\n");
+			break;
+		    case "JOINED":
+			printMessage(parts[1] + " entrou na sala\n");
+			break;
+		    case "LEFT":
+			printMessage(parts[1] + " saiu da sala\n");
+			break;
+		    case "BYE":
+			go=false;
+			break;
+		    case "PRIVATE":
+			printMessage(parts[1] + " (private): " + parts[2] + "\n");
+			break;
+		    default:
+			throw new IOException("Something went wrong\n");
+		    }
+		} catch (IOException ex) {
+		    System.out.println(ex.getMessage());
+		}
 	    }
 	clientSocket.close();
-
-
     }
     
 
@@ -106,5 +135,4 @@ public class ChatClient {
         ChatClient client = new ChatClient(args[0], Integer.parseInt(args[1]));
         client.run();
     }
-
 }
