@@ -11,12 +11,13 @@ public class serv
   static private final ByteBuffer buffer = ByteBuffer.allocate( 16384 );
 
   // Decoder for incoming text -- assume UTF-8
-  static private final Charset charset = Charset.forName("UTF8");
-  static private final CharsetDecoder decoder = charset.newDecoder();
+    static private final Charset charset = Charset.forName("UTF8");
+    static private final CharsetDecoder decoder = charset.newDecoder();
+    static private final CharsetEncoder encoder = charset.newEncoder();
 
     public Set <String> usednames;
 	
-  static public void main( String args[] ) throws Exception {
+    static public void main( String args[] ) throws Exception {
     // Parse port from command line
     int port = Integer.parseInt( args[0] );
     try {
@@ -144,6 +145,7 @@ public class serv
 	    {
 		String[] msspl = cur.split("\n", 2);
 		cur = msspl[1];
+		System.out.println("o cur e :" + cur + ".");
 		String newmss = msspl[0];
 		if(handle(newmss, selector, key))
 		    return false;
@@ -155,30 +157,30 @@ public class serv
     static private boolean handle(String message, Selector selector, SelectionKey key) throws IOException{
 	if(message.charAt(0) != '/' || message.charAt(1) == '/')
 	    {
-		buffer.clear();
 		user clint = (user)key.attachment();
-		if(clint.getst() != 2)
+	        if(clint.getst() != 2)
 		    {
-			//da erro e sai
+			SocketChannel sc = (SocketChannel)key.channel();
+			sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
+		        return false;
 		    }
 		if(message.charAt(0) == '/')
 			message = message.substring(1);
-		message = "MESSAGE " + clint.getnick() + " " + message;
-		byte[] messagebytes = message.getBytes();
-		buffer.putInt(messagebytes.length);
-		buffer.put(messagebytes);
+		String nm = "MESSAGE " + clint.getnick() + " " + message + "\n";
+		System.out.println(nm + ". Acaba aqui");
 		Set<SelectionKey> keys = selector.keys();
 		Iterator<SelectionKey> keyIterator = keys.iterator();
 		while(keyIterator.hasNext())
 		    {
+			System.out.println("Tentando mandar\n");
 			SelectionKey key1 = keyIterator.next();
 			if(key1.isAcceptable())
 			    continue;
 			SocketChannel sc1 = (SocketChannel)key1.channel();
-			sc1.write(buffer);
-			buffer.rewind();
+			sc1.write(encoder.encode(CharBuffer.wrap(nm)));
+		        System.out.println("Mandei uma\n");
 		    }
-		return true;
+		return false;
 	    }
 	return false;
     }
