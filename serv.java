@@ -5,7 +5,7 @@ import java.nio.channels.*;
 import java.nio.charset.*;
 import java.util.*;
 
-public class Server
+public class serv
 {
   // A pre-allocated buffer for the received data
   static private final ByteBuffer buffer = ByteBuffer.allocate( 16384 );
@@ -14,11 +14,11 @@ public class Server
   static private final Charset charset = Charset.forName("UTF8");
   static private final CharsetDecoder decoder = charset.newDecoder();
 
-
+    public Set <String> usednames;
+	
   static public void main( String args[] ) throws Exception {
     // Parse port from command line
     int port = Integer.parseInt( args[0] );
-    
     try {
       // Instead of creating a ServerSocket, create a ServerSocketChannel
       ServerSocketChannel ssc = ServerSocketChannel.open();
@@ -72,9 +72,13 @@ public class Server
             SocketChannel sc = s.getChannel();
             sc.configureBlocking( false );
 
-            // Register it with the selector, for reading
-            sc.register( selector, SelectionKey.OP_READ );
+	    user obj = new user();
 
+
+	    // Register it with the selector, for reading
+            sc.register( selector, SelectionKey.OP_READ, obj);
+
+	    
           } else if ((key.readyOps() & SelectionKey.OP_READ) ==
             SelectionKey.OP_READ) {
 

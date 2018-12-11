@@ -16,7 +16,12 @@ public class ChatClient {
 
     // Se for necessário adicionar variáveis ao objecto ChatClient, devem
     // ser colocadas aqui
-
+	String sentence;
+	String modifiedSentence;
+	BufferedReader inFromUser;
+	Socket clientSocket;
+	DataOutputStream outToServer;
+	BufferedReader inFromServer;
 
 
     
@@ -58,7 +63,10 @@ public class ChatClient {
         // Se for necessário adicionar código de inicialização ao
         // construtor, deve ser colocado aqui
 
-
+	inFromUser = new BufferedReader(new InputStreamReader(System.in));
+	clientSocket = new Socket(server, port);
+	outToServer = new DataOutputStream(clientSocket.getOutputStream());
+	inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
     }
 
@@ -68,6 +76,7 @@ public class ChatClient {
     public void newMessage(String message) throws IOException {
         // PREENCHER AQUI com código que envia a mensagem ao servidor
 
+		outToServer.writeBytes(message +'\n');
 
 
     }
@@ -76,7 +85,16 @@ public class ChatClient {
     // Método principal do objecto
     public void run() throws IOException {
         // PREENCHER AQUI
-
+	while(true)
+	    {
+	        //	if((sentence = inFromUser.readLine()) == null)
+		//	    break;
+	        modifiedSentence = inFromServer.readLine();
+	        printMessage("From Server: " +modifiedSentence+"\n");
+	        if(modifiedSentence.compareTo("BYE") == 0)
+		    break;
+	    }
+	clientSocket.close();
 
 
     }
