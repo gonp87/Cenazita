@@ -83,12 +83,13 @@ public class serv
             SelectionKey.OP_READ) {
 
             SocketChannel sc = null;
-
+	    user clint = null;
             try {
 
               // It's incoming data on a connection -- process it
               sc = (SocketChannel)key.channel();
-              boolean ok = processInput( sc, selector);
+	      clint = (user)key.attachment();
+	      boolean ok = processInput( sc, selector, clint);
 
               // If the connection is dead, remove it from the selector
               // and close it
@@ -129,32 +130,45 @@ public class serv
 
 
   // Just read the message from the socket and send it to stdout
-    static private boolean processInput( SocketChannel sc, Selector selector ) throws IOException {
+    static private boolean processInput( SocketChannel sc, Selector selector, user clint) throws IOException {
     // Read the message to the buffer
-    buffer.clear();
-    sc.read( buffer );
-    buffer.flip();
+    
+	buffer.clear();
+	sc.read( buffer );
+	buffer.flip();
 
-    // If no data, close the connection
-    if (buffer.limit()==0) {
-      return false;
+	// Decode the message
+	String message = decoder.decode(buffer).toString();
+	clint.addbuff(message);
+	String cur = clint.getbuffer();
+	while(cur.contains('\n'))
+	    {
+		String[] msspl = cur.split("\n", 2);
+		cur = msspl[1];
+		String newmss = msspl[0];
+		if(handle(newmss, selector, clint))
+		    return false;
+	    }
+	clint.addbuff(cur);
+	return true;
     }
 
-    // Decode and print the message to stdout
-    //String message = decoder.decode(buffer).toString();
-    //System.out.print( message );
-    Set<SelectionKey> keys = selector.keys();
-    Iterator<SelectionKey> keyIterator = keys.iterator();
-    while(keyIterator.hasNext())
-	{
-	    SelectionKey key1 = keyIterator.next();
-	    if(key1.isAcceptable())
-		continue;
-	    SocketChannel sc1 = (SocketChannel)key1.channel();
-	    sc1.write(buffer);
-	    buffer.rewind();
-	    // keyIterator.remove();
-	}
-    return true;
-  }
+    static private boolean handle(String message, Selector selector, user clint) throws IOException{
+	if(message.charAt(0) != '/' || message.charAt(1) == '/')
+	    {
+		
+		Set<SelectionKey> keys = selector.keys();
+		Iterator<SelectionKey> keyIterator = keys.iterator();
+		while(keyIterator.hasNext())
+		    {
+			SelectionKey key1 = keyIterator.next();
+			if(key1.isAcceptable())
+			    continue;
+			SocketChannel sc1 = (SocketChannel)key1.channel();
+			sc1.write(buffer);
+			buffer.rewind();
+		    }
+		return true;
+	    }
+    }
 }
