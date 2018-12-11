@@ -15,7 +15,7 @@ public class serv
     static private final CharsetDecoder decoder = charset.newDecoder();
     static private final CharsetEncoder encoder = charset.newEncoder();
 
-    static public Set <String> usednames;
+    static public Set <String> usednames = new HashSet<String>();
 	
     static public void main( String args[] ) throws Exception {
     // Parse port from command line
@@ -219,8 +219,10 @@ public class serv
 				SocketChannel sc1 = (SocketChannel)key1.channel();
 				sc1.write(encoder.encode(CharBuffer.wrap("NEWNICK "+clint.getnick()+" "+parts[1]+"\n")));
 			    }
+			usednames.remove(clint.getnick());
 			break;
 		    default:
+			usednames.remove(clint.getnick());
 			break;
 		    }
 		    sc.write(encoder.encode(CharBuffer.wrap("OK\n")));
