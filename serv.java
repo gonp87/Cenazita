@@ -166,22 +166,19 @@ public class serv
 		    }
 		if(message.charAt(0) == '/')
 			message = message.substring(1);
-		String nm = "MESSAGE " + clint.nick + " " + message + "\n";
-		System.out.println(nm + ". Acaba aqui");
+		String nm = "MESSAGE " + clint.getnick() + " " + message + "\n";
 		Set<SelectionKey> keys = selector.keys();
 		Iterator<SelectionKey> keyIterator = keys.iterator();
 		while(keyIterator.hasNext())
 		    {
-			System.out.println("Tentando mandar\n");
 			SelectionKey key1 = keyIterator.next();
 			if(key1.isAcceptable())
 			    continue;
 			SocketChannel sc1 = (SocketChannel)key1.channel();
-			user current = (user)key1.attachment();
-			if(current.getst() != 2 || current.getroom().compareTo(clint.getroom()) != 0)
+			user clint2 = (user)key1.attachment();
+			if(clint2.getst() != 2 || clint2.getroom().compareTo(clint.getroom()) != 0)
 			    continue;
 			sc1.write(encoder.encode(CharBuffer.wrap(nm)));
-		        System.out.println("Mandei uma\n");
 		    }
 		return false;
 	    }
@@ -334,6 +331,26 @@ public class serv
 		    }
 		    sc.write(encoder.encode(CharBuffer.wrap("BYE\n")));
 		    return true;
+		case "/priv":
+		    if(parts.length!=3 || usednames.contains(parts[1]))
+			{
+			    sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
+			    return false;
+			}
+		    sc.write(encoder.encode(CharBuffer.wrap("OK\n")));
+		    if(message.charAt(0) == '/')
+			message = message.substring(1);
+		    String nm = "PRIVATE " + clint.getnick() + " " + parts[2] + "\n";
+		    while(keyIterator.hasNext())
+			{
+			    SelectionKey key1 = keyIterator.next();
+			    user clint2 = (user)key1.attachment();
+			    if(key1.isAcceptable() || clint2.getnick().compareTo(parts[1])!=0)
+				continue;
+			    SocketChannel sc1 = (SocketChannel)key1.channel();
+			    sc1.write(encoder.encode(CharBuffer.wrap(nm)));
+			}
+		    return false;
 		default:
 		    sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
 		    return false;
