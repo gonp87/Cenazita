@@ -83,13 +83,11 @@ public class serv
             SelectionKey.OP_READ) {
 
             SocketChannel sc = null;
-	    user clint = null;
             try {
 
               // It's incoming data on a connection -- process it
               sc = (SocketChannel)key.channel();
-	      clint = (user)key.attachment();
-	      boolean ok = processInput( sc, selector, clint);
+	      boolean ok = processInput( sc, selector, key);
 
               // If the connection is dead, remove it from the selector
               // and close it
@@ -130,33 +128,45 @@ public class serv
 
 
   // Just read the message from the socket and send it to stdout
-    static private boolean processInput( SocketChannel sc, Selector selector, user clint) throws IOException {
+    static private boolean processInput( SocketChannel sc, Selector selector, SelectionKey key) throws IOException {
     // Read the message to the buffer
     
 	buffer.clear();
 	sc.read( buffer );
 	buffer.flip();
 
+	user clint = (user)key.attachment();
 	// Decode the message
 	String message = decoder.decode(buffer).toString();
 	clint.addbuff(message);
 	String cur = clint.getbuffer();
-	while(cur.contains('\n'))
+	while(cur.contains("\n"))
 	    {
 		String[] msspl = cur.split("\n", 2);
 		cur = msspl[1];
 		String newmss = msspl[0];
-		if(handle(newmss, selector, clint))
+		if(handle(newmss, selector, key))
 		    return false;
 	    }
 	clint.addbuff(cur);
 	return true;
     }
 
-    static private boolean handle(String message, Selector selector, user clint) throws IOException{
+    static private boolean handle(String message, Selector selector, SelectionKey key) throws IOException{
 	if(message.charAt(0) != '/' || message.charAt(1) == '/')
 	    {
-		
+		buffer.clear();
+		user clint = (user)key.attachment();
+		if(clint.getst() != 2)
+		    {
+			//da erro e sai
+		    }
+		if(message.charAt(0) == '/')
+			message = message.substring(1);
+		message = "MESSAGE " + clint.getnick() + " " + message;
+		byte[] messagebytes = message.getBytes();
+		buffer.putInt(messagebytes.length);
+		buffer.put(messagebytes);
 		Set<SelectionKey> keys = selector.keys();
 		Iterator<SelectionKey> keyIterator = keys.iterator();
 		while(keyIterator.hasNext())
@@ -170,5 +180,6 @@ public class serv
 		    }
 		return true;
 	    }
+	return false;
     }
 }
