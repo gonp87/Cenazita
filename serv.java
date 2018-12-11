@@ -15,7 +15,7 @@ public class serv
     static private final CharsetDecoder decoder = charset.newDecoder();
     static private final CharsetEncoder encoder = charset.newEncoder();
 
-    public Set <String> usednames;
+    static public Set <String> usednames;
 	
     static public void main( String args[] ) throws Exception {
     // Parse port from command line
@@ -199,19 +199,12 @@ public class serv
 			sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
 			return false;
 		    }
-		    while(keyIterator.hasNext())
+		    if(usednames.contains(parts[1]))
 			{
-			    SelectionKey key1 = keyIterator.next();
-			    if(key1.isAcceptable() || key==key1)
-				continue;
-			    user clint2 = (user)key1.attachment();
-			    if(parts[1].compareTo(clint2.nick)==0)
-				{
-				    sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
-				    return false;
-				}   
+			    sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
+			    return false;
 			}
-		    switch (clint.state) {
+		    switch (clint.getst()) {
 		    case 0:
 			clint.state=1;
 			break;
@@ -221,10 +214,10 @@ public class serv
 			    {
 				SelectionKey key1 = keyIterator.next();
 				user clint2 = (user)key1.attachment();
-				if(key1.isAcceptable() || (clint2.state==2 && clint2.room.compareTo(clint.room)!=0))
+				if(key1.isAcceptable() || (clint2.getst()==2 && clint2.getroom().compareTo(clint.room)!=0))
 				    continue;
 				SocketChannel sc1 = (SocketChannel)key1.channel();
-				sc1.write(encoder.encode(CharBuffer.wrap("NEWNICK "+clint.nick+" "+parts[1]+"\n")));
+				sc1.write(encoder.encode(CharBuffer.wrap("NEWNICK "+clint.getnick()+" "+parts[1]+"\n")));
 			    }
 			break;
 		    default:
@@ -232,6 +225,7 @@ public class serv
 		    }
 		    sc.write(encoder.encode(CharBuffer.wrap("OK\n")));
 		    clint.newnick(parts[1]);
+		    usednames.add(parts[1]);
 		    return false;
 		case "/join":
 		    if(parts.length!=2)
@@ -239,7 +233,7 @@ public class serv
 			sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
 			return false;
 		    }
-		    switch (clint.state) {
+		    switch (clint.getst()) {
 		    case 1:
 			keyIterator = keys.iterator();
 			while(keyIterator.hasNext())
@@ -248,12 +242,12 @@ public class serv
 				user clint2 = (user)key1.attachment();
 				if(key1.isAcceptable() ||
 				   key==key1 ||
-				   (clint2.state==2 && clint2.room.compareTo(parts[1])!=0))
+				   clint2.getst()!=2 ||
+				   (clint2.getst()==2 && clint2.getroom().compareTo(parts[1])!=0))
 				    continue;
 				SocketChannel sc1 = (SocketChannel)key1.channel();
-				sc1.write(encoder.encode(CharBuffer.wrap("JOINED "+clint.nick+"\n")));
+				sc1.write(encoder.encode(CharBuffer.wrap("JOINED "+clint.getnick()+"\n")));
 			    }
-			clint.state=2;
 			break;
 		    case 2:
 			keyIterator = keys.iterator();
@@ -263,15 +257,15 @@ public class serv
 				user clint2 = (user)key1.attachment();
 				if(key1.isAcceptable() || key==key1)
 				    continue;
-				if(clint2.state==2 && clint2.room.compareTo(clint.room)==0)
+				if(clint2.getst()==2 && clint2.getroom().compareTo(clint.room)==0)
 				    {
 					SocketChannel sc1 = (SocketChannel)key1.channel();
-					sc1.write(encoder.encode(CharBuffer.wrap("JOINED "+clint.nick+"\n")));
+					sc1.write(encoder.encode(CharBuffer.wrap("JOINED "+clint.getnick()+"\n")));
 				    }
-				else if(clint2.state==2 && clint2.room.compareTo(parts[1])==0)
+				else if(clint2.getst()==2 && clint2.getroom().compareTo(parts[1])==0)
 				    {
 					SocketChannel sc1 = (SocketChannel)key1.channel();
-					sc1.write(encoder.encode(CharBuffer.wrap("LEFT "+clint.nick+"\n")));
+					sc1.write(encoder.encode(CharBuffer.wrap("LEFT "+clint.getnick()+"\n")));
 				    }
 			    }
 			break;
@@ -280,7 +274,7 @@ public class serv
 			return false;
 		    }
 		    sc.write(encoder.encode(CharBuffer.wrap("OK\n")));
-		    clint.room=parts[1];
+		    clint.changeroom(parts[1]);
 		    return false;
 		case "/leave":
 		    if(parts.length!=1)
@@ -288,7 +282,7 @@ public class serv
 			sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
 			return false;
 		    }
-		    switch(clint.state) {
+		    switch(clint.getst()) {
 		    case 2:
 			keyIterator = keys.iterator();
 			while(keyIterator.hasNext())
@@ -297,10 +291,11 @@ public class serv
 				user clint2 = (user)key1.attachment();
 				if(key1.isAcceptable() ||
 				   key==key1 ||
-				   (clint2.state==2 && clint2.room.compareTo(parts[1])!=0))
+				   clint2.getst()==2 ||
+				   (clint2.getst()==2 && clint2.getroom().compareTo(clint.getroom())!=0))
 				    continue;
 				SocketChannel sc1 = (SocketChannel)key1.channel();
-				sc1.write(encoder.encode(CharBuffer.wrap("LEFT "+clint.nick+"\n")));
+				sc1.write(encoder.encode(CharBuffer.wrap("LEFT "+clint.getnick()+"\n")));
 			    }
 			break;
 		    default:
@@ -308,7 +303,7 @@ public class serv
 			return false;
 		    }
 		    sc.write(encoder.encode(CharBuffer.wrap("OK\n")));
-		    clint.state=1;
+		    clint.leaveroom();
 		    return false;
 		case "/bye":
 		    if(parts.length!=1)
@@ -316,7 +311,7 @@ public class serv
 			    sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
 			    return false;
 			}
-		    switch(clint.state) {
+		    switch(clint.getst()) {
 		    case 2:
 			keyIterator = keys.iterator();
 			while(keyIterator.hasNext())
@@ -325,10 +320,11 @@ public class serv
 				user clint2 = (user)key1.attachment();
 				if(key1.isAcceptable() ||
 				   key==key1 ||
-				   (clint2.state==2 && clint2.room.compareTo(parts[1])!=0))
+				   clint2.getst()==2 ||
+				   (clint2.getst()==2 && clint2.getroom().compareTo(clint.getroom())!=0))
 				    continue;
 				SocketChannel sc1 = (SocketChannel)key1.channel();
-				sc1.write(encoder.encode(CharBuffer.wrap("LEFT "+clint.nick+"\n")));
+				sc1.write(encoder.encode(CharBuffer.wrap("LEFT "+clint.getnick()+"\n")));
 			    }
 			break;
 		    default:
