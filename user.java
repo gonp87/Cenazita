@@ -38,6 +38,16 @@ public class user{
 	buffer = "";
 	return t;
     }
+    
+    public String getnick()
+    {
+	return nick;
+    }
+
+    public String getroom()
+    {
+	return room;
+    }
 
     public int getst()
     {

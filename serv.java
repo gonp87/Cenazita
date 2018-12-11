@@ -177,6 +177,9 @@ public class serv
 			if(key1.isAcceptable())
 			    continue;
 			SocketChannel sc1 = (SocketChannel)key1.channel();
+			user current = (user)key1.attachment();
+			if(current.getst() != 2 || current.getroom().compareTo(clint.getroom()) != 0)
+			    continue;
 			sc1.write(encoder.encode(CharBuffer.wrap(nm)));
 		        System.out.println("Mandei uma\n");
 		    }
