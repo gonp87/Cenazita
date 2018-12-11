@@ -319,7 +319,7 @@ public class serv
 				user clint2 = (user)key1.attachment();
 				if(key1.isAcceptable() ||
 				   key==key1 ||
-				   clint2.getst()==2 ||
+				   clint2.getst()!=2 ||
 				   (clint2.getst()==2 && clint2.getroom().compareTo(clint.getroom())!=0))
 				    continue;
 				SocketChannel sc1 = (SocketChannel)key1.channel();
@@ -329,10 +329,11 @@ public class serv
 		    default:
 			break;
 		    }
+		    usednames.remove(clint.getnick());
 		    sc.write(encoder.encode(CharBuffer.wrap("BYE\n")));
 		    return true;
 		case "/priv":
-		    if(parts.length!=3 || usednames.contains(parts[1]))
+		    if(parts.length!=3 || !usednames.contains(parts[1]))
 			{
 			    sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
 			    return false;
