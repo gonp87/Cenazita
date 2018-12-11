@@ -145,7 +145,6 @@ public class serv
 	    {
 		String[] msspl = cur.split("\n", 2);
 		cur = msspl[1];
-		System.out.println("o cur e :" + cur + ".");
 		String newmss = msspl[0];
 		if(handle(newmss, selector, key))
 		    return false;
@@ -333,7 +332,7 @@ public class serv
 		    sc.write(encoder.encode(CharBuffer.wrap("BYE\n")));
 		    return true;
 		case "/priv":
-		    if(parts.length!=3 || !usednames.contains(parts[1]))
+		    if(parts.length!=3 || clint.getst()==0 || !usednames.contains(parts[1]))
 			{
 			    sc.write(encoder.encode(CharBuffer.wrap("ERROR\n")));
 			    return false;
