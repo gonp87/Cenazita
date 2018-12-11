@@ -134,5 +134,6 @@ public class ChatClient {
     public static void main(String[] args) throws IOException {
         ChatClient client = new ChatClient(args[0], Integer.parseInt(args[1]));
         client.run();
+	System.exit(0);
     }
 }
